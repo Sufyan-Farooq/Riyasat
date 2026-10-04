@@ -30,6 +30,8 @@ No remote account, database, or deployment has been provisioned by this reposito
 
 ## Workflows
 
+The Add property form accepts Google Maps place and dropped-pin links, including supported shortened share links. It fills coordinates from selected pins without an API key. To fill address, city, state and country, set the server-only `GOOGLE_MAPS_API_KEY` environment variable with Google Maps Platform's Geocoding API enabled and billing configured. Restrict the key to that API and set usage quotas. The lookup runs only for authenticated workspace owners. Review the returned address before saving; Google may omit individual address components. A map camera centre is never treated as the property pin. Manual entry remains available. Share links are followed only across the explicit Google Maps host allowlist.
+
 - Properties, buildings represented by property records, named floors and rentable unit blocks; drag/reorder/resize plus keyboard-accessible layout controls; coordinates and external maps; private property documents.
 - Tenants/co-tenant notes, agreements, scheduled monthly charges, due-day clamping, day-based proration, one dated rent increase, recurring tenant charges, end-of-tenancy credits and deposit settlement.
 - Payments with payer, collector, method, destination, date/reference, partial allocations, withholding, advance rent and overpayments. Printable receipts and tenant statement exports.
