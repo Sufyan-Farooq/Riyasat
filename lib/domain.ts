@@ -9,6 +9,7 @@ export function money(value: unknown): number {
   const n = Number(value); if (!Number.isSafeInteger(n) || n < 0 || n > 100_000_000_000) throw new Error('Enter a valid non-negative amount.'); return n;
 }
 function text(value: unknown, label: string, required = true): string { const s = String(value ?? '').trim(); if ((required && !s) || s.length > 2000) throw new Error(`${label} is required and must be under 2,000 characters.`); return s; }
+function reference(value: unknown, label: string): string { const s = text(value, label, false); if (s.length > 80) throw new Error(`${label} must be under 80 characters.`); return s; }
 function date(value: unknown): string { const s = text(value, 'Date'); if (!/^\d{4}-\d{2}-\d{2}$/.test(s) || new Date(`${s}T00:00:00Z`).toISOString().slice(0, 10) !== s) throw new Error('Enter a valid date.'); return s; }
 function number(value: unknown, min: number, max: number): number { const n = Number(value); if (!Number.isFinite(n) || n < min || n > max) throw new Error(`Value must be between ${min} and ${max}.`); return n; }
 function integer(value: unknown, min: number, max: number): number { const n = number(value, min, max); if (!Number.isInteger(n)) throw new Error('Use a whole number.'); return n; }
@@ -113,7 +114,15 @@ export function applyCommand(original: WorkspaceState, command: Command, actor: 
     }
     case 'property.add': {
       owner(); const id = uid(); const latitude = p.latitude === '' || p.latitude === undefined ? undefined : number(p.latitude, -90, 90); const longitude = p.longitude === '' || p.longitude === undefined ? undefined : number(p.longitude, -180, 180);
-      s.properties.push({ id, name: text(p.name, 'Property name'), address: text(p.address, 'Address'), city: text(p.city, 'City'), state: text(p.state, 'State'), country: text(p.country || 'India', 'Country'), latitude, longitude }); propertyId = id; detail = `Added ${p.name}`; break;
+      s.properties.push({ id, name: text(p.name, 'Property name'), address: text(p.address, 'Address'), city: text(p.city, 'City'), state: text(p.state, 'State'), country: text(p.country || 'India', 'Country'), latitude, longitude, waterCan: reference(p.waterCan, 'Water CAN'), ptin: reference(p.ptin, 'Property tax PTIN') }); propertyId = id; detail = `Added ${p.name}`; break;
+    }
+    case 'property.update': {
+      owner(); property(); const record = find(s.properties, propertyId, 'Property'); const oldName = record.name;
+      for (const key of ['name', 'address', 'city', 'state', 'country'] as const) if (key in p) record[key] = text(p[key], key);
+      for (const key of ['waterCan', 'ptin'] as const) if (key in p) record[key] = reference(p[key], key === 'waterCan' ? 'Water CAN' : 'Property tax PTIN');
+      if ('latitude' in p) record.latitude = p.latitude === '' || p.latitude == null ? undefined : number(p.latitude, -90, 90);
+      if ('longitude' in p) record.longitude = p.longitude === '' || p.longitude == null ? undefined : number(p.longitude, -180, 180);
+      detail = `Updated property ${oldName}${oldName !== record.name ? ` → ${record.name}` : ''}`; break;
     }
     case 'floor.add': { property(); s.floors.push({ id: uid(), propertyId: propertyId!, name: text(p.name, 'Floor name'), order: number(p.order, -20, 300) }); break; }
     case 'unit.add': {
@@ -124,12 +133,31 @@ export function applyCommand(original: WorkspaceState, command: Command, actor: 
     case 'unit.layout': { const u = find(s.units, p.unitId, 'Unit'); property(u.propertyId); const f = find(s.floors, p.floorId, 'Floor'); if (f.propertyId !== u.propertyId) throw new Error('Cannot move between properties.'); u.floorId = f.id; u.order = number(p.order, 0, 10000); u.width = number(p.width, 1, 4); break; }
     case 'unit.archive': { const u = find(s.units, p.unitId, 'Unit'); property(u.propertyId); if (s.leases.some(l => l.unitIds.includes(u.id) && !l.ended && l.end >= today(s.timezone))) throw new Error('End the active agreement before archiving this unit.'); u.archived = true; break; }
     case 'tenant.add': { property(); s.tenants.push({ id: uid(), propertyId: propertyId!, name: text(p.name, 'Tenant name'), email: text(p.email, 'Email', false), phone: text(p.phone, 'Phone', false), notes: text(p.notes, 'Notes', false) }); break; }
+    case 'tenant.update': {
+      const tenant = find(s.tenants, p.tenantId, 'Tenant'); property(tenant.propertyId); const oldName = tenant.name;
+      if ('name' in p) tenant.name = text(p.name, 'Tenant name');
+      for (const key of ['email', 'phone', 'notes'] as const) if (key in p) tenant[key] = text(p[key], key, false);
+      detail = `Updated tenant ${oldName}${oldName !== tenant.name ? ` → ${tenant.name}` : ''}`; break;
+    }
+    case 'tenant.remove': {
+      const tenant = find(s.tenants, p.tenantId, 'Tenant'); property(tenant.propertyId);
+      if (s.leases.some(l => l.tenantId === tenant.id)) throw new Error('This tenant has agreement history. Archive the tenant instead to preserve their records.');
+      s.tenants = s.tenants.filter(t => t.id !== tenant.id); detail = `Deleted unused tenant ${tenant.name}`; break;
+    }
+    case 'tenant.archive': {
+      const tenant = find(s.tenants, p.tenantId, 'Tenant'); property(tenant.propertyId);
+      if (s.leases.some(l => l.tenantId === tenant.id && !l.ended && l.end >= today(s.timezone))) throw new Error('Record move-out or end the active/future agreement before archiving this tenant.');
+      tenant.archived = true; detail = `Archived tenant ${tenant.name}; history retained`; break;
+    }
+    case 'tenant.restore': {
+      const tenant = find(s.tenants, p.tenantId, 'Tenant'); property(tenant.propertyId); tenant.archived = false; detail = `Restored tenant ${tenant.name}`; break;
+    }
     case 'lease.add': {
       property(); const unitIds = Array.isArray(p.unitIds) ? p.unitIds.map(String) : [String(p.unitId)]; if (!unitIds.length || new Set(unitIds).size !== unitIds.length) throw new Error('Select distinct units.');
       for (const id of unitIds) { const u = find(s.units, id, 'Unit'); if (u.archived || u.propertyId !== propertyId || u.kind === 'Common area') throw new Error('Choose an available rentable unit in this property.'); }
       const start = date(p.start), end = date(p.end); if (end < start || Date.parse(end) - Date.parse(start) > 30 * 366 * 86400000) throw new Error('Agreement end must follow its start, within 30 years.');
       if (s.leases.some(l => l.unitIds.some(id => unitIds.includes(id)) && l.start <= end && (l.ended || l.end) >= start)) throw new Error('An agreement already occupies this unit during those dates.');
-      if (find(s.tenants, p.tenantId, 'Tenant').propertyId !== propertyId) throw new Error('Tenant belongs to a different property.'); const l: Lease = { id: uid(), propertyId: propertyId!, tenantId: String(p.tenantId), unitIds, start, end, rent: positive(p.rent), deposit: money(p.deposit || 0), dueDay: integer(p.dueDay, 1, 31), noticeDays: integer(p.noticeDays ?? 30, 0, 365), recurring: money(p.recurring || 0), escalationPercent: number(p.escalationPercent || 0, 0, 100), escalationDate: p.escalationDate ? date(p.escalationDate) : '' }; if (l.escalationDate && !l.escalationDate.endsWith('-01')) throw new Error('Rent increases must start on the first of a month.'); s.leases.push(l); generateCharges(s, today(s.timezone), new Set([propertyId!])); break;
+      const tenant = find(s.tenants, p.tenantId, 'Tenant'); if (tenant.propertyId !== propertyId) throw new Error('Tenant belongs to a different property.'); if (tenant.archived) throw new Error('Restore this tenant before creating an agreement.'); const l: Lease = { id: uid(), propertyId: propertyId!, tenantId: String(p.tenantId), unitIds, start, end, rent: positive(p.rent), deposit: money(p.deposit || 0), dueDay: integer(p.dueDay, 1, 31), noticeDays: integer(p.noticeDays ?? 30, 0, 365), recurring: money(p.recurring || 0), escalationPercent: number(p.escalationPercent || 0, 0, 100), escalationDate: p.escalationDate ? date(p.escalationDate) : '' }; if (l.escalationDate && !l.escalationDate.endsWith('-01')) throw new Error('Rent increases must start on the first of a month.'); s.leases.push(l); generateCharges(s, today(s.timezone), new Set([propertyId!])); break;
     }
     case 'lease.end': { const l = lease(); const d = date(p.date); unlocked(s, d); if (l.ended) throw new Error('This agreement has already ended.'); if (d < l.start || d > l.end || d > today(s.timezone)) throw new Error('Move-out must be within the agreement dates and no later than today.'); l.ended = d; const [y, m] = d.split('-').map(Number), days = new Date(Date.UTC(y, m, 0)).getUTCDate(); const monthEnd = `${d.slice(0, 7)}-${String(days).padStart(2, '0')}`; const originalTo = l.end < monthEnd ? l.end : monthEnd; for (const c of s.charges.filter(c => c.leaseId === l.id && (c.date > d || c.key.includes(`:${d.slice(0, 7)}`)))) { const originalDays = Math.round((Date.parse(originalTo) - Date.parse(c.date)) / 86400000) + 1; const stayed = Math.round((Date.parse(d) - Date.parse(c.date)) / 86400000) + 1; const reduction = c.date > d ? c.amount : d < originalTo ? c.amount - Math.round(c.amount * stayed / originalDays) : 0; if (reduction > 0) s.approvals.push({ id: uid(), propertyId: l.propertyId, kind: 'charge-credit', amount: reduction, sourceId: c.id, leaseId: l.id, accountId: s.accounts[0].id, date: c.date > d ? c.date : d, reason: `Move-out proration · ${c.description}`, requestedBy: actor.name, status: 'pending' }); } break; }
     case 'charges.generate': { const through = date(p.date); if (through > today(s.timezone)) throw new Error('Generate charges only through today.'); const allowed = new Set(s.properties.filter(p => accessible(actor, p.id)).map(p => p.id)); generateCharges(s, through, allowed); generateBills(s, through, allowed); break; }

@@ -1,9 +1,9 @@
 export type Role = 'owner' | 'manager' | 'viewer';
 export type Actor = { id: string; name: string; role: Role; propertyIds: string[] | null };
-export type Property = { id: string; name: string; address: string; city: string; state: string; country: string; latitude?: number; longitude?: number; archived?: boolean };
+export type Property = { id: string; name: string; address: string; city: string; state: string; country: string; latitude?: number; longitude?: number; waterCan?: string; ptin?: string; archived?: boolean };
 export type Floor = { id: string; propertyId: string; name: string; order: number };
 export type Unit = { id: string; propertyId: string; floorId: string; name: string; kind: string; area: number; order: number; width: number; archived?: boolean };
-export type Tenant = { id: string; propertyId: string; name: string; email: string; phone: string; notes: string };
+export type Tenant = { id: string; propertyId: string; name: string; email: string; phone: string; notes: string; archived?: boolean };
 export type Lease = { id: string; propertyId: string; unitIds: string[]; tenantId: string; rent: number; deposit: number; start: string; end: string; dueDay: number; noticeDays: number; recurring: number; escalationPercent: number; escalationDate: string; ended?: string };
 export type Charge = { id: string; propertyId: string; leaseId: string; date: string; due: string; amount: number; kind: 'rent' | 'utility' | 'maintenance'; description: string; key: string };
 export type Allocation = { chargeId: string; amount: number; date?: string };
