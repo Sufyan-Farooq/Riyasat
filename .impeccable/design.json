@@ -1,0 +1,330 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-04T21:55:44.7392178Z",
+  "title": "Design System: Riyasat",
+  "extensions": {
+    "colorMeta": {
+      "paper": {
+        "role": "neutral",
+        "rampSource": "Synthesized preview ramp; frontmatter remains normative.",
+        "tonalRamp": [
+          "oklch(15% 0.006 110)",
+          "oklch(26% 0.006 110)",
+          "oklch(37% 0.006 110)",
+          "oklch(49% 0.006 110)",
+          "oklch(61% 0.006 110)",
+          "oklch(73% 0.006 110)",
+          "oklch(85% 0.006 110)",
+          "oklch(95% 0.006 110)"
+        ],
+        "displayName": "Warm paper"
+      },
+      "surface": {
+        "role": "neutral",
+        "rampSource": "Synthesized preview ramp; frontmatter remains normative.",
+        "tonalRamp": [
+          "oklch(15% 0 0)",
+          "oklch(26% 0 0)",
+          "oklch(37% 0 0)",
+          "oklch(49% 0 0)",
+          "oklch(61% 0 0)",
+          "oklch(73% 0 0)",
+          "oklch(85% 0 0)",
+          "oklch(95% 0 0)"
+        ],
+        "displayName": "White record"
+      },
+      "ink": {
+        "role": "neutral",
+        "rampSource": "Synthesized preview ramp; frontmatter remains normative.",
+        "tonalRamp": [
+          "oklch(15% 0.025 163)",
+          "oklch(26% 0.025 163)",
+          "oklch(37% 0.025 163)",
+          "oklch(49% 0.025 163)",
+          "oklch(61% 0.025 163)",
+          "oklch(73% 0.025 163)",
+          "oklch(85% 0.025 163)",
+          "oklch(95% 0.025 163)"
+        ],
+        "displayName": "Estate ink"
+      },
+      "muted": {
+        "role": "neutral",
+        "rampSource": "Synthesized preview ramp; frontmatter remains normative.",
+        "tonalRamp": [
+          "oklch(15% 0.023 162)",
+          "oklch(26% 0.023 162)",
+          "oklch(37% 0.023 162)",
+          "oklch(49% 0.023 162)",
+          "oklch(61% 0.023 162)",
+          "oklch(73% 0.023 162)",
+          "oklch(85% 0.023 162)",
+          "oklch(95% 0.023 162)"
+        ],
+        "displayName": "Muted context"
+      },
+      "green": {
+        "role": "primary",
+        "rampSource": "Synthesized preview ramp; frontmatter remains normative.",
+        "tonalRamp": [
+          "oklch(15% 0.05 158)",
+          "oklch(26% 0.05 158)",
+          "oklch(37% 0.05 158)",
+          "oklch(49% 0.05 158)",
+          "oklch(61% 0.05 158)",
+          "oklch(73% 0.05 158)",
+          "oklch(85% 0.05 158)",
+          "oklch(95% 0.05 158)"
+        ],
+        "displayName": "Register green"
+      },
+      "deep": {
+        "role": "primary",
+        "rampSource": "Synthesized preview ramp; frontmatter remains normative.",
+        "tonalRamp": [
+          "oklch(15% 0.05 158)",
+          "oklch(26% 0.05 158)",
+          "oklch(37% 0.05 158)",
+          "oklch(49% 0.05 158)",
+          "oklch(61% 0.05 158)",
+          "oklch(73% 0.05 158)",
+          "oklch(85% 0.05 158)",
+          "oklch(95% 0.05 158)"
+        ],
+        "displayName": "Deep wayfinding"
+      },
+      "lime": {
+        "role": "primary",
+        "rampSource": "Synthesized preview ramp; frontmatter remains normative.",
+        "tonalRamp": [
+          "oklch(15% 0.1 123)",
+          "oklch(26% 0.1 123)",
+          "oklch(37% 0.1 123)",
+          "oklch(49% 0.1 123)",
+          "oklch(61% 0.1 123)",
+          "oklch(73% 0.1 123)",
+          "oklch(85% 0.1 123)",
+          "oklch(95% 0.1 123)"
+        ],
+        "displayName": "Active lime"
+      },
+      "rule": {
+        "role": "neutral",
+        "rampSource": "Synthesized preview ramp; frontmatter remains normative.",
+        "tonalRamp": [
+          "oklch(15% 0.01 130)",
+          "oklch(26% 0.01 130)",
+          "oklch(37% 0.01 130)",
+          "oklch(49% 0.01 130)",
+          "oklch(61% 0.01 130)",
+          "oklch(73% 0.01 130)",
+          "oklch(85% 0.01 130)",
+          "oklch(95% 0.01 130)"
+        ],
+        "displayName": "Quiet rule"
+      },
+      "danger": {
+        "role": "semantic",
+        "rampSource": "Synthesized preview ramp; frontmatter remains normative.",
+        "tonalRamp": [
+          "oklch(15% 0.13 25)",
+          "oklch(26% 0.13 25)",
+          "oklch(37% 0.13 25)",
+          "oklch(49% 0.13 25)",
+          "oklch(61% 0.13 25)",
+          "oklch(73% 0.13 25)",
+          "oklch(85% 0.13 25)",
+          "oklch(95% 0.13 25)"
+        ],
+        "displayName": "Error red"
+      },
+      "warning": {
+        "role": "semantic",
+        "rampSource": "Synthesized preview ramp; frontmatter remains normative.",
+        "tonalRamp": [
+          "oklch(15% 0.08 75)",
+          "oklch(26% 0.08 75)",
+          "oklch(37% 0.08 75)",
+          "oklch(49% 0.08 75)",
+          "oklch(61% 0.08 75)",
+          "oklch(73% 0.08 75)",
+          "oklch(85% 0.08 75)",
+          "oklch(95% 0.08 75)"
+        ],
+        "displayName": "Attention amber"
+      },
+      "pale": {
+        "role": "neutral",
+        "rampSource": "Synthesized preview ramp; frontmatter remains normative.",
+        "tonalRamp": [
+          "oklch(15% 0.016 135)",
+          "oklch(26% 0.016 135)",
+          "oklch(37% 0.016 135)",
+          "oklch(49% 0.016 135)",
+          "oklch(61% 0.016 135)",
+          "oklch(73% 0.016 135)",
+          "oklch(85% 0.016 135)",
+          "oklch(95% 0.016 135)"
+        ],
+        "displayName": "Pale green"
+      },
+      "focus": {
+        "role": "semantic",
+        "rampSource": "Synthesized preview ramp; frontmatter remains normative.",
+        "tonalRamp": [
+          "oklch(15% 0.09 130)",
+          "oklch(26% 0.09 130)",
+          "oklch(37% 0.09 130)",
+          "oklch(49% 0.09 130)",
+          "oklch(61% 0.09 130)",
+          "oklch(73% 0.09 130)",
+          "oklch(85% 0.09 130)",
+          "oklch(95% 0.09 130)"
+        ],
+        "displayName": "Focus green"
+      }
+    },
+    "typographyMeta": {
+      "label": {
+        "purpose": "Field and action labels.",
+        "displayName": "Label"
+      },
+      "title": {
+        "purpose": "Record and panel headings.",
+        "displayName": "Section title"
+      },
+      "headline": {
+        "purpose": "Operational page headings.",
+        "displayName": "Page heading"
+      },
+      "body": {
+        "purpose": "UI and prose.",
+        "displayName": "Body"
+      }
+    },
+    "shadows": [
+      {
+        "purpose": "Transient status feedback.",
+        "value": "0 5px 15px #0002",
+        "name": "toast"
+      },
+      {
+        "purpose": "Slide-over form separation.",
+        "value": "-4px 0 20px #0001",
+        "name": "drawer"
+      }
+    ],
+    "motion": [
+      {
+        "purpose": "Button state feedback; disabled for reduced motion.",
+        "value": "background .15s, color .15s",
+        "name": "button-colour"
+      },
+      {
+        "purpose": "Slide-over entrance; disabled for reduced motion.",
+        "value": "enter-drawer .2s ease-out",
+        "name": "drawer-entry"
+      }
+    ],
+    "breakpoints": [
+      {
+        "value": "1500px",
+        "name": "wide-min"
+      },
+      {
+        "value": "1200px",
+        "name": "intermediate-max"
+      },
+      {
+        "value": "960px",
+        "name": "stack-max"
+      },
+      {
+        "value": "700px",
+        "name": "mobile-max"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary button",
+      "html": "<button class=\"ds-primary\">Record payment</button>",
+      "css": ".ds-primary{font-family:Manrope,Arial,sans-serif;display:inline-flex;justify-content:center;align-items:center;gap:8px;min-height:40px;padding:10px 15px;border-radius:7px;border:1px solid transparent;font-size:12px;font-weight:600;cursor:pointer;transition:background .15s,color .15s; background:var(--green,#234d3b);color:var(--surface,#fff)}.ds-primary:hover:not(:disabled){background:#153728}.ds-primary:focus-visible{outline:3px solid var(--focus,#739851);outline-offset:3px} .ds-primary:disabled{opacity:.5;cursor:not-allowed}@media(prefers-reduced-motion:reduce){.ds-primary{transition:none}}",
+      "kind": "button",
+      "description": "Records the principal action.",
+      "refersTo": "button-primary"
+    },
+    {
+      "name": "Secondary button",
+      "html": "<button class=\"ds-secondary\">View statement</button>",
+      "css": ".ds-secondary{font-family:Manrope,Arial,sans-serif;display:inline-flex;justify-content:center;align-items:center;gap:8px;min-height:40px;padding:10px 15px;border-radius:7px;border:1px solid transparent;font-size:12px;font-weight:600;cursor:pointer;transition:background .15s,color .15s; background:var(--surface,#fff);color:var(--ink,#192c26);border-color:#d4ddd1}.ds-secondary:hover:not(:disabled){background:var(--pale,#edf3e9)}.ds-secondary:focus-visible{outline:3px solid var(--focus,#739851);outline-offset:3px} .ds-secondary:disabled{opacity:.5;cursor:not-allowed}@media(prefers-reduced-motion:reduce){.ds-secondary{transition:none}}",
+      "kind": "button",
+      "description": "Supporting action without competing with the principal action.",
+      "refersTo": "button-secondary"
+    },
+    {
+      "name": "Text field",
+      "html": "<label class=\"ds-label\">Reference<input class=\"ds-input\" placeholder=\"Payment reference\" /></label>",
+      "css": ".ds-label{font-family:Manrope,Arial,sans-serif; display:flex;flex-direction:column;gap:7px;font-size:12px;font-weight:600;color:var(--ink,#192c26)}.ds-input{font-family:Manrope,Arial,sans-serif; font-size:14px;border:1px solid #ccd5cb;border-radius:7px;background:var(--surface,#fff);color:var(--ink,#192c26);padding:10px 12px}.ds-input:focus{outline:2px solid var(--focus,#739851);outline-offset:1px}.ds-input::placeholder{color:#6a776f}",
+      "kind": "input",
+      "description": "Native labeled record entry.",
+      "refersTo": "input"
+    },
+    {
+      "css": ".ds-nav{background:var(--deep,#173c2e);padding:16px;display:flex;flex-direction:column;gap:5px}.ds-nav button{font-family:Manrope,Arial,sans-serif; color:#d4e1d6;background:none;border:0;text-align:left;padding:12px 14px;border-radius:7px;font-size:12px;cursor:pointer}.ds-nav button:hover{background:#284f3a}.ds-nav .ds-current{background:var(--lime,#d8ed9f);color:#20372b;font-weight:700}.ds-nav button:focus-visible{outline:3px solid var(--focus,#739851);outline-offset:3px}",
+      "kind": "nav",
+      "description": "Deep green wayfinding with explicit active-screen label.",
+      "html": "<nav class=\"ds-nav\" aria-label=\"Estate\"><button class=\"ds-current\" aria-current=\"page\">Overview</button><button>Properties</button></nav>",
+      "name": "Estate navigation"
+    },
+    {
+      "css": ".ds-tag{font-family:Manrope,Arial,sans-serif; display:inline-flex;white-space:nowrap;border-radius:5px;padding:4px 7px;font-size:10px;font-weight:600;color:var(--warning,#805816);background:#fbefda}",
+      "kind": "chip",
+      "description": "Readable warning tag beside a financial record.",
+      "html": "<span class=\"ds-tag\">Balance due</span>",
+      "name": "Balance status"
+    },
+    {
+      "name": "Record panel",
+      "html": "<section class=\"ds-panel\"><h2>Payments received</h2><p>Cash and tax withheld are shown separately.</p></section>",
+      "css": ".ds-panel{font-family:Manrope,Arial,sans-serif; background:var(--surface,#fff);color:var(--ink,#192c26);border:1px solid var(--rule,#e2e7df);border-radius:var(--radius,14px);padding:22px}.ds-panel h2{margin:0;font-size:17px;line-height:1.4;font-weight:700;letter-spacing:-.3px}.ds-panel p{margin:5px 0 0;font-size:10px;color:var(--muted,#607069)}",
+      "kind": "card",
+      "description": "Quiet white record container with tonal borders.",
+      "refersTo": "panel"
+    },
+    {
+      "css": ".ds-unit{font-family:Manrope,Arial,sans-serif; display:flex;flex-direction:column;gap:7px;text-align:left;min-width:120px;padding:13px;border:1px solid #e7d9b1;background:#faf4e5;color:var(--ink,#192c26);border-radius:9px;outline:2px solid var(--green,#234d3b);outline-offset:2px;cursor:pointer}.ds-unit span{font-size:9px}.ds-unit strong{font-size:18px;font-weight:600}.ds-unit small{font-size:9px}.ds-unit:focus-visible{outline:3px solid var(--focus,#739851);outline-offset:3px}",
+      "kind": "custom",
+      "description": "Schematic unit selection opens contextual tenant and balance details; layout controls are permission-dependent.",
+      "html": "<button class=\"ds-unit\"><span>Flat</span><strong>101</strong><small>Occupied · Balance due</small><span>₹12,000 / mo</span></button>",
+      "name": "Selected unit"
+    }
+  ],
+  "narrative": {
+    "dos": [
+      "Do use tabular numerals for financial records.",
+      "Do preserve property and unit context when opening detailed records.",
+      "Do pair status colour with readable labels or record context.",
+      "Do keep keyboard-accessible layout controls alongside unit dragging."
+    ],
+    "donts": [
+      "Don't represent schematic visual width as measured building geometry.",
+      "Don't present edit or administration controls to roles that cannot use them."
+    ],
+    "northStar": "Estate register",
+    "overview": "A readable property ledger with spatial building navigation. Light warm paper and deep green wayfinding suit an owner or manager reviewing finances on a laptop or phone in daylight. Plain financial language and restrained status treatments keep the records understandable.\n\nThe user chose code-first and delegated visual choices. The implemented system pairs an open summary strip with detailed financial rows and floor bands; visual density serves operational scanning and traceable balances.",
+    "keyCharacteristics": [
+      "Warm paper, white records and deep green navigation.",
+      "Tabular financial numerals and explicit status words.",
+      "Floor bands with selectable unit blocks and contextual details."
+    ],
+    "rules": [
+      {
+        "body": "Colour supports an explicit label or readable record context; it never carries status alone.",
+        "section": "colors",
+        "name": "Status Words"
+      }
+    ]
+  }
+}
