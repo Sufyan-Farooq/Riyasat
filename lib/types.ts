@@ -1,6 +1,6 @@
 export type Role = 'owner' | 'manager' | 'viewer';
 export type Actor = { id: string; name: string; role: Role; propertyIds: string[] | null };
-export type Property = { id: string; name: string; address: string; city: string; state: string; country: string; latitude?: number; longitude?: number; waterCan?: string; ptin?: string; archived?: boolean };
+export type Property = { id: string; name: string; kind?: 'building' | 'flat'; flatNumber?: string; buildingName?: string; floorName?: string; address: string; city: string; state: string; country: string; latitude?: number; longitude?: number; waterCan?: string; ptin?: string; archived?: boolean };
 export type Floor = { id: string; propertyId: string; name: string; order: number };
 export type Unit = { id: string; propertyId: string; floorId: string; name: string; kind: string; area: number; order: number; width: number; archived?: boolean };
 export type Tenant = { id: string; propertyId: string; name: string; email: string; phone: string; notes: string; archived?: boolean };

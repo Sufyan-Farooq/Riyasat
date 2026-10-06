@@ -114,19 +114,37 @@ export function applyCommand(original: WorkspaceState, command: Command, actor: 
     }
     case 'property.add': {
       owner(); const id = uid(); const latitude = p.latitude === '' || p.latitude === undefined ? undefined : number(p.latitude, -90, 90); const longitude = p.longitude === '' || p.longitude === undefined ? undefined : number(p.longitude, -180, 180);
-      s.properties.push({ id, name: text(p.name, 'Property name'), address: text(p.address, 'Address'), city: text(p.city, 'City'), state: text(p.state, 'State'), country: text(p.country || 'India', 'Country'), latitude, longitude, waterCan: reference(p.waterCan, 'Water CAN'), ptin: reference(p.ptin, 'Property tax PTIN') }); propertyId = id; detail = `Added ${p.name}`; break;
+      const kind = p.kind === undefined ? 'building' : String(p.kind);
+      if (kind !== 'building' && kind !== 'flat') throw new Error('Choose a building or an individual flat.');
+      const flat = kind === 'flat' ? { flatNumber: text(p.flatNumber, 'Flat number'), buildingName: text(p.buildingName, 'Building / society'), floorName: text(p.floorName, 'Floor') } : {};
+      s.properties.push({ id, kind, ...flat, name: text(p.name, 'Property name'), address: text(p.address, 'Address'), city: text(p.city, 'City'), state: text(p.state, 'State'), country: text(p.country || 'India', 'Country'), latitude, longitude, waterCan: reference(p.waterCan, 'Water CAN'), ptin: reference(p.ptin, 'Property tax PTIN') });
+      if (kind === 'flat') {
+        const floorId = uid();
+        s.floors.push({ id: floorId, propertyId: id, name: flat.floorName!, order: 0 });
+        s.units.push({ id: uid(), propertyId: id, floorId, name: flat.flatNumber!, kind: 'Flat', area: number(p.area || 0, 0, 1e7), order: 0, width: 1 });
+      }
+      propertyId = id; detail = `Added ${p.name}`; break;
     }
     case 'property.update': {
       owner(); property(); const record = find(s.properties, propertyId, 'Property'); const oldName = record.name;
+      if ('kind' in p && p.kind !== (record.kind || 'building')) throw new Error('Property type cannot change after setup.');
+      if (record.kind === 'flat') {
+        for (const key of ['flatNumber', 'buildingName', 'floorName'] as const) if (key in p) record[key] = text(p[key], key);
+        const unit = s.units.find(u => u.propertyId === record.id);
+        if (unit) { if ('flatNumber' in p) unit.name = record.flatNumber!; if ('area' in p) unit.area = number(p.area || 0, 0, 1e7); }
+        const floor = s.floors.find(f => f.propertyId === record.id);
+        if (floor && 'floorName' in p) floor.name = record.floorName!;
+      }
       for (const key of ['name', 'address', 'city', 'state', 'country'] as const) if (key in p) record[key] = text(p[key], key);
       for (const key of ['waterCan', 'ptin'] as const) if (key in p) record[key] = reference(p[key], key === 'waterCan' ? 'Water CAN' : 'Property tax PTIN');
       if ('latitude' in p) record.latitude = p.latitude === '' || p.latitude == null ? undefined : number(p.latitude, -90, 90);
       if ('longitude' in p) record.longitude = p.longitude === '' || p.longitude == null ? undefined : number(p.longitude, -180, 180);
       detail = `Updated property ${oldName}${oldName !== record.name ? ` → ${record.name}` : ''}`; break;
     }
-    case 'floor.add': { property(); s.floors.push({ id: uid(), propertyId: propertyId!, name: text(p.name, 'Floor name'), order: number(p.order, -20, 300) }); break; }
+    case 'floor.add': { property(); if (find(s.properties, propertyId, 'Property').kind === 'flat') throw new Error('An individual flat does not need additional floors.'); s.floors.push({ id: uid(), propertyId: propertyId!, name: text(p.name, 'Floor name'), order: number(p.order, -20, 300) }); break; }
     case 'unit.add': {
       property(); const f = find(s.floors, p.floorId, 'Floor'); if (f.propertyId !== propertyId) throw new Error('Floor belongs to a different property.');
+      if (find(s.properties, propertyId, 'Property').kind === 'flat') throw new Error('An individual flat already has its rentable unit.');
       if (s.units.some(u => u.propertyId === propertyId && u.name === p.name && !u.archived)) throw new Error('Unit name already exists.');
       s.units.push({ id: uid(), propertyId: propertyId!, floorId: f.id, name: text(p.name, 'Unit name'), kind: text(p.kind, 'Unit type'), area: number(p.area, 0, 1e7), order: s.units.filter(u => u.floorId === f.id).length, width: number(p.width || 1, 1, 4) }); break;
     }
