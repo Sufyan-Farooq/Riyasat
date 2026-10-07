@@ -21,12 +21,31 @@ npm run build
 
 1. Create a Supabase project. Run `supabase/migrations/001_workspace.sql` in its SQL editor. It creates workspaces, memberships, invitations, versioned workspace data, service-only transaction functions, and a private evidence bucket.
 2. Copy `.env.example` to `.env.local`. Supply the project URL, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, and **server-only `SUPABASE_SECRET_KEY`**. Never prefix the secret key with `NEXT_PUBLIC_`. Legacy `NEXT_PUBLIC_SUPABASE_ANON_KEY` and `SUPABASE_SERVICE_ROLE_KEY` variables are also supported.
-3. Configure Supabase Auth email verification, the application site URL, and allowed password-reset redirect URLs (`http://localhost:3000/?reset=true` locally and your production URL). Configure transactional email delivery for production.
+3. Configure Supabase Auth email verification, the application site URL, and allowed password-reset redirect URLs (`http://localhost:3000/?reset=true` locally and `https://your-app-domain/?reset=true` in production). Recovery links open the new-password and confirmation form, including when Supabase falls back to the site URL. Configure transactional email delivery for production.
 4. Restart the dev server. Register and verify your email, then create a workspace. In Settings → Account security, enroll a TOTP authenticator and verify it. Owner writes, private uploads, and access grants require an `aal2` session on the server.
 5. Deploy to Vercel with the same environment variables and a long random `CRON_SECRET`. `vercel.json` calls `/api/cron` daily at 00:30 UTC. The endpoint requires the secret and returns HTTP 500 plus workspace IDs when any generation fails. Monitor this response and retry failures; retries cannot duplicate charges/bills.
 6. Invite members from Settings and share the app URL yourself. The application does **not send invitation messages**. An invitation is accepted when a verified account signs in with the exact invited email; pending invitations expire after seven days. Owners can revoke membership and cancel invitations.
 
 No remote account, database, or deployment has been provisioned by this repository. Hosted auth, SQL, MFA, storage and invitation flows require verification against your configured Supabase project before production use.
+
+## Google sign-in
+
+The sign-in and registration screens support **Continue with Google** through Supabase Auth. Email/password and password recovery remain available.
+
+1. In [Google Auth Platform](https://console.cloud.google.com/auth/overview), configure the app name and support contact. Use an External audience for personal Google accounts. If the app is in Testing, add the Google accounts that will test it to the test-user list.
+2. Create an OAuth client of type **Web application**, named `Riyasat Web`. Add the app's production origin and `http://localhost:3000` as authorized JavaScript origins. The authorized redirect URI is your Supabase project URL followed by `/auth/v1/callback`, rather than the app URL.
+3. In Supabase → Authentication → Sign In / Providers → Google, enter the Google client ID and secret and enable Google. Store the client secret only in Supabase's provider configuration; it does not belong in the browser bundle or a `NEXT_PUBLIC_` variable.
+4. In Supabase → Authentication → URL Configuration, set the production Site URL and allow the exact app return URLs, including `http://localhost:3000/` locally and `https://your-app-domain/` in production. Keep the `/?reset=true` redirects required for password recovery. For the browser checks on port 3100, use `http://localhost:3100/` too.
+5. Use only the standard `openid`, email, and profile scopes. No Google Drive, Gmail, or Calendar access is needed. Deploy the app changes and verify a real Google sign-in against the configured project. Workspace memberships and owner MFA checks still apply to Google users.
+
+With the configured app running locally on port 3100, run the isolated browser checks:
+
+```powershell
+npx tsx tests/google-auth.browser.ts
+npx tsx tests/password-recovery.browser.ts
+```
+
+These checks simulate provider responses; they do not verify live Google credentials. [Supabase's Google setup guide](https://supabase.com/docs/guides/auth/social-login/auth-google) covers the provider configuration.
 
 ## Workflows
 

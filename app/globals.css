@@ -21,3 +21,4 @@
 .property-location .location-result{color:var(--green)}
 .property-location .location-error{color:var(--danger)}
 @media(max-width:700px){.property-location-controls{flex-direction:column}.property-location-controls button{align-self:flex-start}}
+.auth-google{width:100%;justify-content:center;margin:0 0 20px}

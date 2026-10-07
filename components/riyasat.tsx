@@ -5,7 +5,7 @@ import type { LucideIcon } from 'lucide-react';
 import type { Actor, Command, Lease, Property, Tenant, WorkspaceAccess, WorkspaceState } from '@/lib/types';
 import { accountBalance, billBalance, chargeBalance, creditBalance, depositBalance, metrics, projectState, today, uid } from '@/lib/domain';
 import { csv, displayDate, formatMoney, parseCsv, parseMoney } from '@/lib/format';
-import { configured, supabase } from '@/lib/supabase';
+import { authRedirectFailed, clearPasswordRecovery, configured, isPasswordRecovery, markPasswordRecovery, supabase } from '@/lib/supabase';
 import SecurityPanel from './security-panel';
 import { printRecord } from '@/lib/print';
 import PropertyLocation from './property-location';
@@ -40,9 +40,28 @@ export default function Riyasat() {
   const loadWorkspaces = useCallback(async () => { const result = await api('/api/workspaces'); setWorkspaces(result.workspaces); if (result.workspaces.length) await loadWorkspace(result.workspaces[0].id); else setState(null); }, [api, loadWorkspace]);
   useEffect(() => {
     if (!configured) { setSessionReady(true); return; }
-    if (new URLSearchParams(location.search).get('reset') === 'true') setAuthMode('newpassword');
-    supabase!.auth.getSession().then(async ({ data }) => { setSignedIn(!!data.session); if (data.session) { try { await loadWorkspaces(); } catch (e) { setError(String(e)); } } setSessionReady(true); });
-    const { data } = supabase!.auth.onAuthStateChange((_event, session) => { setSignedIn(!!session); }); return () => data.subscription.unsubscribe();
+    if (isPasswordRecovery()) { markPasswordRecovery(); setAuthMode('newpassword'); }
+    const { data } = supabase!.auth.onAuthStateChange((event, session) => {
+      if (event === 'PASSWORD_RECOVERY') { markPasswordRecovery(); setAuthMode('newpassword'); setAuthError(''); }
+      setSignedIn(!!session);
+    });
+    supabase!.auth.getSession().then(async ({ data, error }) => {
+      setSignedIn(!!data.session);
+      if (isPasswordRecovery()) {
+        setAuthMode('newpassword');
+        if (error || !data.session) setAuthError('This reset link is invalid or has expired. Request a new link to try again.');
+      } else {
+        if (authRedirectFailed || error) {
+          setAuthError('Sign-in could not be completed. Please try again.');
+          const url = new URL(location.href);
+          for (const name of ['error', 'error_code', 'error_description']) url.searchParams.delete(name);
+          url.hash = ''; history.replaceState(null, '', url);
+        }
+        if (data.session) { try { await loadWorkspaces(); } catch (e) { setError(String(e)); } }
+      }
+      setSessionReady(true);
+    });
+    return () => data.subscription.unsubscribe();
   }, [loadWorkspaces]);
   useEffect(() => { if (!notice) return; const timeout = setTimeout(() => setNotice(''), 5000); return () => clearTimeout(timeout); }, [notice]);
   useEffect(() => { if (page === 'Settings' && workspaceId && actor.role === 'owner') api(`/api/workspace/${workspaceId}/members`).then(r => { setMembers(r.members); setInvitations(r.invitations || []); }).catch(e => setError(e.message)); }, [page, workspaceId, actor.role, api]);
@@ -78,10 +97,52 @@ export default function Riyasat() {
       setForm(null);
     } catch (err) { setError(err instanceof Error ? err.message : 'Unable to save.'); }
   };
-  const authenticate = async (e: React.FormEvent<HTMLFormElement>) => { e.preventDefault(); setAuthBusy(true); setAuthError(''); const f = new FormData(e.currentTarget); const email = String(f.get('email')), password = String(f.get('password')); try { const result = authMode === 'newpassword' ? await supabase!.auth.updateUser({ password }) : authMode === 'signup' ? await supabase!.auth.signUp({ email, password, options: { data: { name: f.get('name') } } }) : authMode === 'reset' ? await supabase!.auth.resetPasswordForEmail(email, { redirectTo: `${location.origin}/?reset=true` }) : await supabase!.auth.signInWithPassword({ email, password }); if (result.error) throw result.error; if (authMode === 'newpassword') { setAuthMode('signin'); history.replaceState(null, '', '/'); await loadWorkspaces(); } else if (authMode === 'reset') setAuthError('Check your email for a password reset link.'); else if ('session' in result.data && result.data.session) { setSignedIn(true); await loadWorkspaces(); } else setAuthError('Check your email to verify your account, then sign in.'); } catch (e) { setAuthError(e instanceof Error ? e.message : 'Authentication failed.'); } finally { setAuthBusy(false); } };
+  const requestAnotherReset = async () => {
+    setAuthBusy(true); setAuthError('');
+    try {
+      const { error } = await supabase!.auth.signOut({ scope: 'local' });
+      if (error) throw error;
+      clearPasswordRecovery(); setSignedIn(false); setState(null); setAuthMode('reset');
+    } catch (e) { setAuthError(e instanceof Error ? e.message : 'Could not restart password reset.'); }
+    finally { setAuthBusy(false); }
+  };
+  const signInWithGoogle = async () => {
+    setAuthBusy(true); setAuthError('');
+    try {
+      const { error } = await supabase!.auth.signInWithOAuth({
+        provider: 'google', options: { redirectTo: `${location.origin}/` },
+      });
+      if (error) throw error;
+    } catch (e) {
+      setAuthError(e instanceof Error ? e.message : 'Could not start Google sign-in. Please try again.');
+      setAuthBusy(false);
+    }
+  };
+  const authenticate = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault(); setAuthBusy(true); setAuthError('');
+    const f = new FormData(e.currentTarget), email = String(f.get('email')), password = String(f.get('password'));
+    try {
+      if (authMode === 'newpassword') {
+        if (!signedIn) throw new Error('This reset link is invalid or has expired. Request a new link to try again.');
+        if (password !== f.get('confirmPassword')) throw new Error('Passwords do not match. Please enter the same password in both fields.');
+      }
+      const result = authMode === 'newpassword' ? await supabase!.auth.updateUser({ password })
+        : authMode === 'signup' ? await supabase!.auth.signUp({ email, password, options: { data: { name: f.get('name') } } })
+        : authMode === 'reset' ? await supabase!.auth.resetPasswordForEmail(email, { redirectTo: `${location.origin}/?reset=true` })
+        : await supabase!.auth.signInWithPassword({ email, password });
+      if (result.error) throw result.error;
+      if (authMode === 'newpassword') {
+        clearPasswordRecovery(); setAuthMode('signin'); setNotice('Your password has been updated.');
+        try { await loadWorkspaces(); } catch (e) { setError(e instanceof Error ? e.message : 'Could not load your workspaces.'); }
+      } else if (authMode === 'reset') setAuthError('Check your email for a password reset link.');
+      else if ('session' in result.data && result.data.session) { setSignedIn(true); await loadWorkspaces(); }
+      else setAuthError('Check your email to verify your account, then sign in.');
+    } catch (e) { setAuthError(e instanceof Error ? e.message : 'Authentication failed.'); }
+    finally { setAuthBusy(false); }
+  };
   if (!configured) return <div className="boot"><Building2 size={40} /><h1>Riyasat is not connected yet</h1><p>Contact your administrator to finish setting up the secure workspace.</p></div>;
   if (!sessionReady) return <div className="boot"><Building2 size={40} /><h1>Riyasat</h1><p>Opening your estate…</p></div>;
-  if (!signedIn || authMode === 'newpassword') return <div className="auth-shell"><div className="auth-story"><Building2 size={40} /><h1>Your estate.<br />A clearer picture.</h1><p>Every property, every payment, every rupee.<br />One shared source of truth for your family.</p><div className="auth-mark">Riyasat</div></div><section className="auth-form"><h2>{authMode === 'signup' ? 'Create your account' : authMode === 'reset' || authMode === 'newpassword' ? 'Reset your password' : 'Welcome to Riyasat'}</h2><p>Private property management for owners and families.</p><form onSubmit={authenticate}>{authMode === 'signup' && <label>Your name<input name="name" required autoComplete="name" /></label>}{authMode !== 'newpassword' && <label>Email<input name="email" type="email" required autoComplete="email" /></label>}{authMode !== 'reset' && <label>Password<input name="password" type="password" required minLength={8} autoComplete={authMode === 'signup' ? 'new-password' : 'current-password'} /></label>}<button className="primary" disabled={authBusy}>{authBusy ? 'Please wait…' : authMode === 'signup' ? 'Create account' : authMode === 'reset' ? 'Send reset link' : authMode === 'newpassword' ? 'Save new password' : 'Sign in'}<ArrowRight size={16} /></button></form>{authError && <p className="form-message" role="status">{authError}</p>}<div className="auth-links"><button onClick={() => setAuthMode(authMode === 'signup' ? 'signin' : 'signup')}>{authMode === 'signup' ? 'Already have an account? Sign in' : 'Create an account'}</button><button onClick={() => setAuthMode(authMode === 'reset' ? 'signin' : 'reset')}>Forgot password?</button></div></section></div>;
+  if (!signedIn || authMode === 'newpassword') return <div className="auth-shell"><div className="auth-story"><Building2 size={40} /><h1>Your estate.<br />A clearer picture.</h1><p>Every property, every payment, every rupee.<br />One shared source of truth for your family.</p><div className="auth-mark">Riyasat</div></div><section className="auth-form"><h2>{authMode === 'signup' ? 'Create your account' : authMode === 'reset' || authMode === 'newpassword' ? 'Reset your password' : 'Welcome to Riyasat'}</h2><p>{authMode === 'newpassword' ? 'Choose a new password with at least 8 characters.' : 'Private property management for owners and families.'}</p>{(authMode === 'signin' || authMode === 'signup') && <button type="button" className="secondary auth-google" disabled={authBusy} onClick={signInWithGoogle}>Continue with Google</button>}<form key={authMode} onSubmit={authenticate}>{authMode === 'signup' && <label>Your name<input name="name" required autoComplete="name" /></label>}{authMode !== 'newpassword' && <label>Email<input name="email" type="email" required autoComplete="email" /></label>}{authMode !== 'reset' && <label>{authMode === 'newpassword' ? 'New password' : 'Password'}<input name="password" type="password" required minLength={8} autoComplete={authMode === 'signup' || authMode === 'newpassword' ? 'new-password' : 'current-password'} /></label>}{authMode === 'newpassword' && <label>Confirm new password<input name="confirmPassword" type="password" required minLength={8} autoComplete="new-password" /></label>}<button className="primary" disabled={authBusy || (authMode === 'newpassword' && !signedIn)}>{authBusy ? 'Please wait…' : authMode === 'signup' ? 'Create account' : authMode === 'reset' ? 'Send reset link' : authMode === 'newpassword' ? 'Save new password' : 'Sign in'}<ArrowRight size={16} /></button></form>{authError && <p className="form-message" role="status">{authError}</p>}<div className="auth-links">{authMode === 'newpassword' ? <button disabled={authBusy} onClick={requestAnotherReset}>Request a new reset link</button> : <><button disabled={authBusy} onClick={() => { setAuthError(''); setAuthMode(authMode === 'signup' ? 'signin' : 'signup'); }}>{authMode === 'signup' ? 'Already have an account? Sign in' : 'Create an account'}</button><button disabled={authBusy} onClick={() => { setAuthError(''); setAuthMode(authMode === 'reset' ? 'signin' : 'reset'); }}>{authMode === 'reset' ? 'Back to sign in' : 'Forgot password?'}</button></>}</div></section></div>;
   if (!s || !filtered) return <div className="boot"><Building2 size={40} /><h1>Start your estate</h1><p>Create a private workspace for your family or business.</p><form onSubmit={async e => { e.preventDefault(); try { const name = String(new FormData(e.currentTarget).get('name')); await api('/api/workspaces', { method: 'POST', body: JSON.stringify({ name }) }); await loadWorkspaces(); } catch (e) { setError(String(e)); } }}><input name="name" placeholder="Workspace name" required maxLength={100} /><button className="primary">Create workspace</button></form>{error && <p role="alert">{error}</p>}<button className="text-button" onClick={async () => { await supabase!.auth.signOut(); setState(null); setSignedIn(false); }}>Sign out</button></div>;
   const m = metrics(filtered, range.from, range.to), allm = metrics(filtered, '1900-01-01', today(s.timezone));
   const outstanding = filtered.charges.reduce((n, c) => n + chargeBalance(filtered, c.id), 0);
