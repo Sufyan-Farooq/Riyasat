@@ -1,0 +1,11 @@
+name: riyasat
+services:
+  app:
+    image: ${APP_IMAGE:?}
+    restart: unless-stopped
+    env_file: ./runtime.env
+    ports: [127.0.0.1:3400:3000]
+    mem_limit: 1g
+    logging:
+      driver: json-file
+      options: {max-size: 10m, max-file: '3'}

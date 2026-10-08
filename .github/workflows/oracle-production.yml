@@ -1,0 +1,36 @@
+name: Oracle production
+on:
+  push:
+    branches: [codex/oracle-production]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: oracle-production
+  cancel-in-progress: false
+jobs:
+  deploy:
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Prepare public build configuration
+        env:
+          PUBLIC_BUILD_ENV: ${{ secrets.PUBLIC_BUILD_ENV }}
+        run: |
+          umask 077
+          printf '%s\n' "$PUBLIC_BUILD_ENV" > "$RUNNER_TEMP/public-build.env"
+      - name: Build and test production image
+        run: docker build --secret id=public_env,src="$RUNNER_TEMP/public-build.env" -t riyasat:${GITHUB_SHA} .
+      - name: Deploy over restricted SSH
+        env:
+          ORACLE_SSH_KEY: ${{ secrets.ORACLE_SSH_KEY }}
+          ORACLE_KNOWN_HOSTS: ${{ secrets.ORACLE_KNOWN_HOSTS }}
+        run: |
+          set -euo pipefail
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$ORACLE_SSH_KEY" > ~/.ssh/oracle_ci
+          printf '%s\n' "$ORACLE_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/oracle_ci ~/.ssh/known_hosts
+          trap 'rm -f ~/.ssh/oracle_ci "$RUNNER_TEMP/public-build.env"' EXIT
+          docker save riyasat:${GITHUB_SHA} | gzip -1 | ssh -i ~/.ssh/oracle_ci -o BatchMode=yes -o StrictHostKeyChecking=yes ubuntu@84.13.143.155 "riyasat ${GITHUB_SHA}"

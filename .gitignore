@@ -7,3 +7,9 @@ test-results/
 playwright-report/
 .impeccable/mocks/
 .impeccable/review/
+
+# Private production deployment configuration
+runtime.env
+release.env
+*.key
+*.pem

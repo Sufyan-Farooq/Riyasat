@@ -1,0 +1,14 @@
+.git
+.github
+node_modules
+.next
+.env*
+*.env
+*.key
+*.pem
+*.log
+*.tsbuildinfo
+.impeccable
+.agent
+.agents
+backups

@@ -1,0 +1,10 @@
+[Unit]
+Description=Run Riyasat's existing daily task at 00:30 UTC
+
+[Timer]
+OnCalendar=*-*-* 00:30:00 UTC
+Persistent=false
+Unit=riyasat-scheduler.service
+
+[Install]
+WantedBy=timers.target

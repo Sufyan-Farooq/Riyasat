@@ -1,0 +1,13 @@
+# Riyasat on Oracle
+
+Production URL: `https://riyasat.sufyanfarooq.com`. Host: `84.13.143.155`, Ubuntu ARM64, SSH user `ubuntu`. Directory: `/home/ubuntu/apps/riyasat`. Container binds only `127.0.0.1:3400`; host Caddy provides HTTPS. The existing Supabase database, authentication and private storage remain hosted. Deployment never initializes or replaces their data.
+
+Push `codex/oracle-production` to deploy through `.github/workflows/oracle-production.yml`. GitHub builds and tests an ARM64 standalone Next.js image. The SSH key accepts only named application releases. The receiver validates architecture, waits for health, checks that the connected application renders, and rolls back to a previous image if available. Initial deployments have no previous image to restore.
+
+Server-only credentials live in a mode-600 `runtime.env` outside Git. CI's `PUBLIC_BUILD_ENV` contains public Supabase configuration only; the Supabase secret key never enters the build. Update public build configuration and runtime configuration together if changing projects. Server Compose/configuration changes require a reviewed SSH installation.
+
+In the `sufyanfarooq.com` DNS zone, add A record `riyasat` → `84.13.143.155`, TTL 300. Supabase Authentication → URL Configuration must allow `https://riyasat.sufyanfarooq.com/` and `https://riyasat.sufyanfarooq.com/?reset=true`; use the production site URL when retiring a previous deployment. Preserve any existing required redirects. Google OAuth uses the Supabase `/auth/v1/callback` URL; the Google client should include the production origin.
+
+The systemd scheduler replaces `vercel.json`: `riyasat-scheduler.timer` runs at **00:30 UTC / 03:30 Asia/Riyadh**. It does not run missed billing tasks automatically on startup. `run-scheduler.py` reads the existing cron credential privately and calls the protected endpoint without putting the credential in process arguments or logs. Never leave another production scheduler active for the same project. Check `systemctl list-timers riyasat-scheduler.timer` and `journalctl -u riyasat-scheduler.service`; failed execution needs review/retry. Financial generation is idempotent, but concurrent edits may cause a workspace failure.
+
+Before entering real operational records, verify real email/Google authentication, recovery links, MFA, workspace isolation, file access, financial workflows, and hosted backup restoration. Build/domain tests alone do not verify those hosted flows. No personal account or synthetic financial records are created by deployment. Configure Supabase database/private-file backups independently of the web container; initial local configuration backup is not scheduled disaster recovery.
